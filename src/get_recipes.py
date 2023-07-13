@@ -21,7 +21,7 @@ def get_recipe(url):
     try:
         scrap = scrap_me(url)
     except:
-        print('Could not scrape URL {}'.format(url))
+        print(f'Could not scrape URL {url}')
         return {}
 
     try:
@@ -54,42 +54,46 @@ def get_recipe(url):
 def get_all_recipes_fn(page_str, page_num):
     base_url = 'http://www.foodnetwork.com'
     search_url_str = 'recipes/a-z'
-    url = '{}/{}/{}/p/{}'.format(base_url, search_url_str, page_str, page_num)
+    url = f'{base_url}/{search_url_str}/{page_str}/p/{page_num}'
 
     try:
         soup = BeautifulSoup(request.urlopen(
             request.Request(url, headers=HEADERS)).read(), "html.parser")
         recipe_link_items = soup.select('div.o-Capsule__m-Body ul.m-PromoList li a')
         recipe_links = [r.attrs['href']for r in recipe_link_items]
-        print('Read {} recipe links from {}'.format(len(recipe_links), url))
+        print(f'Read {len(recipe_links)} recipe links from {url}')
         return recipe_links
     except (HTTPError, URLError):
-        print('Could not parse page {}'.format(url))
+        print(f'Could not parse page {url}')
         return []
 
 
 def get_all_recipes_ar(page_num):
     base_url = 'http://allrecipes.com'
     search_url_str = 'recipes/?page'
-    url = '{}/{}={}'.format(base_url, search_url_str, page_num)
+    url = f'{base_url}/{search_url_str}={page_num}'
 
     try:
         soup = BeautifulSoup(request.urlopen(
             request.Request(url, headers=HEADERS)).read(), "html.parser")
         recipe_link_items = soup.select('article > a:nth-of-type(1)')
-        recipe_links = list(set(
-            [r['href'] for r in recipe_link_items
-             if r is not None and r['href'].split('/')[1] == 'recipe']))
+        recipe_links = list(
+            {
+                r['href']
+                for r in recipe_link_items
+                if r is not None and r['href'].split('/')[1] == 'recipe'
+            }
+        )
         return {base_url + r: get_recipe(base_url + r) for r in recipe_links}
     except (HTTPError, URLError):
-        print('Could not parse page {}'.format(url))
+        print(f'Could not parse page {url}')
         return []
 
 
 def get_all_recipes_epi(page_num):
     base_url = 'http://www.epicurious.com'
     search_url_str = 'search/?content=recipe&page'
-    url = '{}/{}={}'.format(base_url, search_url_str, page_num)
+    url = f'{base_url}/{search_url_str}={page_num}'
 
     try:
         soup = BeautifulSoup(request.urlopen(
@@ -98,16 +102,13 @@ def get_all_recipes_epi(page_num):
         recipe_links = [r['href'] for r in recipe_link_items]
         return {base_url + r: get_recipe(base_url + r) for r in recipe_links}
     except (HTTPError, URLError):
-        print('Could not parse page {}'.format(url))
+        print(f'Could not parse page {url}')
         return []
 
 
 def scrape_recipe_box(scraper, site_str, page_iter, status_interval=50):
 
-    if args.append:
-        recipes = quick_load(site_str)
-    else:
-        recipes = {}
+    recipes = quick_load(site_str) if args.append else {}
     start = time.time()
     if args.multi:
         pool = Pool(cpu_count() * 2)
@@ -118,7 +119,7 @@ def scrape_recipe_box(scraper, site_str, page_iter, status_interval=50):
         for i in page_iter:
             recipes.update(scraper(i))
             if i % status_interval == 0:
-                print('Scraping page {} of {}'.format(i, max(page_iter)))
+                print(f'Scraping page {i} of {max(page_iter)}')
                 quick_save(site_str, recipes)
             time.sleep(args.sleep)
 
@@ -131,16 +132,15 @@ def get_fn_letter_links():
     # get list of pages with links to recipes
     base_url = 'http://www.foodnetwork.com'
     search_url_str = 'recipes/a-z'
-    url = '{}/{}/{}'.format(base_url, search_url_str, '')
+    url = f'{base_url}/{search_url_str}/'
 
     try:
         soup = BeautifulSoup(request.urlopen(
             request.Request(url, headers=HEADERS)).read(), "html.parser")
         page_link_items = soup.select('ul.o-IndexPagination__m-List li a')
-        letter_links = [p['href'] for p in page_link_items]
-        return letter_links
+        return [p['href'] for p in page_link_items]
     except (HTTPError, URLError):
-        print('Could not parse page {}'.format(url))
+        print(f'Could not parse page {url}')
 
 def get_fn_recipe_links():
 
@@ -171,8 +171,9 @@ def scrape_fn(page_num):
     return {r: get_recipe(r) for r in recipe_links}
 
 def quick_load(site_str):
-    return load_recipes(path.join(
-        config.path_data, 'recipes_raw_{}.json'.format(site_str)))
+    return load_recipes(
+        path.join(config.path_data, f'recipes_raw_{site_str}.json')
+    )
 
 def load_recipes(filename):
     with open(filename, 'r') as f:
@@ -180,8 +181,8 @@ def load_recipes(filename):
 
 def quick_save(site_str, recipes):
     save_recipes(
-        path.join(config.path_data, 'recipes_raw_{}.json'.format(site_str)),
-        recipes)
+        path.join(config.path_data, f'recipes_raw_{site_str}.json'), recipes
+    )
 
 def save_recipes(filename, recipes):
     with open(filename, 'w') as f:

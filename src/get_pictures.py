@@ -18,20 +18,19 @@ def load_recipes(filename):
 
 def save_picture(recipes_raw, url):
     recipe = recipes_raw[url]
-    path_save = path.join(
-        config.path_img, '{}.jpg'.format(URL_to_filename(url)))
+    path_save = path.join(config.path_img, f'{URL_to_filename(url)}.jpg')
     if not path.isfile(path_save):
         if 'picture_link' in recipe:
             link = recipe['picture_link']
             if link is not None:
                 try:
                     if 'epicurious' in url:
-                        img_url = 'https://{}'.format(link[2:])
+                        img_url = f'https://{link[2:]}'
                         urllib.request.urlretrieve(img_url, path_save)
                     else:
                         urllib.request.urlretrieve(link, path_save)
                 except:
-                    print('Could not download image from {}'.format(link))
+                    print(f'Could not download image from {link}')
 
 def main(filename, status_interval=500):
     recipes_raw = load_recipes(filename=filename)
